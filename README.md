@@ -6,3 +6,7 @@ Parse shifts from CSV and put them in a google sheets document.
 
 # Run
 `python main.py`
+
+or 
+
+`python3 main.py`
