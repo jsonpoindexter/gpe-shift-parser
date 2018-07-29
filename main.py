@@ -36,7 +36,7 @@ for user_shifts in grouped_shifts:
                 main_event_shifts.append(shift)
         shift_count = len(pre_event_shifts_worked) + len(main_event_shifts)
     if shift_count > 0:
-        print("first shift day worked: %s" % str(first_shift))
+        print("first shift day scheduled: %s" % str(first_shift))
         print("pre event shifts possible: %s" % (main_event_start - first_shift).days)
-        print("pre event shifts worked: %d" % len(pre_event_shifts_worked))
-        print("main event shifts worked: %d" % len(main_event_shifts))
+        print("pre event shifts scheduled: %d" % len(pre_event_shifts_worked))
+        print("main event shifts scheduled: %d" % len(main_event_shifts))
