@@ -1,9 +1,9 @@
 # [x] you must work every day pre-event plus two shifts during event week.
-# [x] If your first day working is before the 23rd you may take a day off during pre event.
-#   If your first working shift is on the 23rd then you must work all 3 days Pre-Event (23, 24, 25).
+# [x] If your first day working is before the 23rd you may take a day off during pre-event.
+# [x] If your first working shift is on the 23rd then you must work all 3 days Pre-Event (23, 24, 25).
 # [x] Your WAP / Credential date will be set one day before your first shift.
-#   The earliest work shift is August 18th, thus the earliest arrival is the 17th,
-#   For the first time, refresh training does count towards setting the date of your arrival.
+# [x] The earliest work shift is August 18th, thus the earliest arrival is the 17th,
+# [x] For the first time, refresh training does count towards setting the date of your arrival.
 # [] Bartender shifts DO NOT COUNT for an early entry.
 
 import csv
@@ -16,7 +16,7 @@ main_event_start = datetime.strptime('2018-08-26 00:00', '%Y-%m-%d %H:%M')  # Ma
 earliest_wap_date = datetime.strptime('2018-08-17 00:00',
                                       '%Y-%m-%d %H:%M')  # Earliest date/time that a WAP can be given
 day_off_date = datetime.strptime('2018-08-23 00:00',
-                                 '%Y-%m-%d %H:%M')  # If your first day working is before the 23rd you may take a day off during pre event.
+                                 '%Y-%m-%d %H:%M')  # If your first day working is before the 23rd you may take a day off during pre-event.
 
 reader = csv.DictReader(open('2018 - I, Robot-2018-07-27.csv'))
 
@@ -45,7 +45,7 @@ for user_shifts in grouped_shifts[0:3]:
                             user_shifts])  # Deternube first scheduled shift
     wap_date = max(earliest_wap_date, first_shift_date - timedelta(days=1))  # Determine earliest WAP date
     pre_event_shifts_possible = ( main_event_start - first_shift_date).days + 1  # Determine how many possible pre-event shifts can be worked
-    qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre event.
+    qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
     all_pre_event = day_off_date <= first_shift_date < main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
 
     pre_event_shifts_scheduled = []
@@ -69,22 +69,25 @@ for user_shifts in grouped_shifts[0:3]:
     else:
         required_pre_event_shifts = None
 
-    wap_status = (required_pre_event_shifts == pre_event_shifts_scheduled) and (main_event_shifts >= 2)
+    met_main_event_requirements = main_event_shifts >= 2
+    met_event_requirements = required_pre_event_shifts == pre_event_shifts_scheduled
+
+    wap_status = met_main_event_requirements and met_event_requirements
 
     if shift_count > 0:
         print("User ID: %s" % user_shifts[0]['User ID'])
         print("first shift day scheduled: %s" % str(first_shift_date))
-        print("pre event shifts possible: %s" % pre_event_shifts_possible)
-        print("pre event shifts scheduled: %d" % pre_event_shifts_scheduled)
-        print("pre event shifts required for wap: %d" % required_pre_event_shifts)
+        print("pre-event shifts possible: %s" % pre_event_shifts_possible)
+        print("pre-event shifts scheduled: %d" % pre_event_shifts_scheduled)
+        print("pre-event shifts required for wap: %d" % required_pre_event_shifts)
         print("main event shifts scheduled: %d" % main_event_shifts)
         print("qualifies for pre-event day off: %r" % qualifies_day_off)
         print("must work all pre-event dates: %r" % all_pre_event)
         print("WAP status: %r" % wap_status)
         if not wap_status:
-            if not required_pre_event_shifts == pre_event_shifts_scheduled:
-                print("WAP false reason: required pre-event shifts are not equal to pre-event shifts scheduled")
-            if not main_event_shifts >= 2:
-                print("WAP false reason: required main-event shifts are not equal to main-event shifts scheduled")
+            if not met_main_event_requirements:
+                print("WAP False reason: required pre-event shifts are not equal to pre-event shifts scheduled")
+            if not met_event_requirements:
+                print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
         print("issue WAP Date: %s" % wap_date.strftime('%Y-%m-%d'))
         print(json.dumps(user_shifts, indent=2))
