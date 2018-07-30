@@ -1,15 +1,9 @@
-# [x] you must work every day pre-event plus two shifts during event week.
-# [x] If your first day working is before the 23rd you may take a day off during pre-event.
-# [x] If your first working shift is on the 23rd then you must work all 3 days Pre-Event (23, 24, 25).
-# [x] Your WAP / Credential date will be set one day before your first shift.
-# [x] The earliest work shift is August 18th, thus the earliest arrival is the 17th,
-# [x] For the first time, refresh training does count towards setting the date of your arrival.
-# [] Bartender shifts DO NOT COUNT for an early entry.
-
 import csv
 import itertools
 from operator import itemgetter
 from datetime import datetime, timedelta
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 main_event_start = datetime.strptime('2018-08-26 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
 earliest_wap_date = datetime.strptime('2018-08-17 00:00',
@@ -98,6 +92,7 @@ for user_shifts in grouped_shifts:
         'User Nickname': user_shifts[0]['User Nickname'],
         'WAP Status': wap_status,
         'WAP Issue Date': wap_date.strftime('%Y-%m-%d'),
+        "First shift day scheduled: ": str(first_shift_date),
         'Pre-Event Shifts Possible': pre_event_shifts_possible,
         'Pre-event shifts scheduled': pre_event_shifts_scheduled,
         'Qualifies for Pre-event day off':  qualifies_day_off,
@@ -109,13 +104,11 @@ for user_shifts in grouped_shifts:
 
 ###### Export to CSV ######
 keys = results[0].keys()
-with open('wap_results_%s.csv' % datetime.now().strftime("%Y%m%d-%H%M%S"), 'wb') as output_file:
+filename = 'wap_results_%s.csv' % datetime.now().strftime("%Y%m%d-%H%M%S")
+with open(filename, 'wb') as output_file:
     dict_writer = csv.DictWriter(output_file, keys)
     dict_writer.writeheader()
     dict_writer.writerows(results)
-
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
@@ -125,5 +118,7 @@ gc = gspread.authorize(credentials)
 
 # Open a worksheet from spreadsheet with one shot
 worksheet = gc.open("test").sheet1
-for key in keys:
-    worksheet 
+
+
+fooboo =open(filename)
+gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", fooboo)
