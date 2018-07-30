@@ -10,7 +10,6 @@ import csv
 import itertools
 from operator import itemgetter
 from datetime import datetime, timedelta
-import json
 
 main_event_start = datetime.strptime('2018-08-26 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
 earliest_wap_date = datetime.strptime('2018-08-17 00:00',
@@ -38,7 +37,8 @@ for key, value in itertools.groupby(shifts,
     grouped_shifts.append(user_shifts)
 
 ###### Determin WAP Status ######
-for user_shifts in grouped_shifts[0:3]:
+results = list()
+for user_shifts in grouped_shifts:
     print("")
 
     first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
@@ -74,20 +74,41 @@ for user_shifts in grouped_shifts[0:3]:
 
     wap_status = met_main_event_requirements and met_event_requirements
 
-    if shift_count > 0:
-        print("User ID: %s" % user_shifts[0]['User ID'])
-        print("first shift day scheduled: %s" % str(first_shift_date))
-        print("pre-event shifts possible: %s" % pre_event_shifts_possible)
-        print("pre-event shifts scheduled: %d" % pre_event_shifts_scheduled)
-        print("pre-event shifts required for wap: %d" % required_pre_event_shifts)
-        print("main event shifts scheduled: %d" % main_event_shifts)
-        print("qualifies for pre-event day off: %r" % qualifies_day_off)
-        print("must work all pre-event dates: %r" % all_pre_event)
-        print("WAP status: %r" % wap_status)
-        if not wap_status:
-            if not met_main_event_requirements:
-                print("WAP False reason: required pre-event shifts are not equal to pre-event shifts scheduled")
-            if not met_event_requirements:
-                print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
-        print("issue WAP Date: %s" % wap_date.strftime('%Y-%m-%d'))
-        print(json.dumps(user_shifts, indent=2))
+    # print("User ID: %s" % user_shifts[0]['User ID'])
+    # print("first shift day scheduled: %s" % str(first_shift_date))
+    # print("pre-event shifts possible: %s" % pre_event_shifts_possible)
+    # print("pre-event shifts scheduled: %d" % pre_event_shifts_scheduled)
+    # print("pre-event shifts required for wap: %d" % required_pre_event_shifts)
+    # print("main event shifts scheduled: %d" % main_event_shifts)
+    # print("qualifies for pre-event day off: %r" % qualifies_day_off)
+    # print("must work all pre-event dates: %r" % all_pre_event)
+    # print("earliest WAP date: %s", wap_date.strftime("%Y-%m-%d"))
+    # print("WAP status: %r" % wap_status)
+    # if not wap_status:
+    #     if not met_main_event_requirements:
+    #         print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
+    #     if not met_event_requirements:
+    #         print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
+    # print("issue WAP Date: %s" % wap_date.strftime('%Y-%m-%d'))
+    # print(json.dumps(user_shifts, indent=2))
+
+
+    results.append({
+        'User ID': user_shifts[0]['User ID'],
+        'User Nickname': user_shifts[0]['User Nickname'],
+        'WAP Status': wap_status,
+        'WAP Issue Date': wap_date.strftime('%Y-%m-%d'),
+        'Pre-Event Shifts Possible': pre_event_shifts_possible,
+        'Pre-event shifts scheduled': pre_event_shifts_scheduled,
+        'Qualifies for Pre-event day off':  qualifies_day_off,
+        'Pre-event shifts required for WAP':  required_pre_event_shifts,
+        'Main-event shifts scheduled':  main_event_shifts,
+        'Must work all pre-event dates':  all_pre_event
+    })
+
+
+keys = results[0].keys()
+with open('wap_results_%s.csv' % datetime.now().strftime("%Y%m%d-%H%M%S"), 'wb') as output_file:
+    dict_writer = csv.DictWriter(output_file, keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(results)
