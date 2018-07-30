@@ -39,7 +39,7 @@ for key, value in itertools.groupby(shifts,
 ###### Determin WAP Status ######
 results = list()
 for user_shifts in grouped_shifts:
-    print("")
+    # print("")
 
     first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
                             user_shifts])  # Deternube first scheduled shift
@@ -107,8 +107,23 @@ for user_shifts in grouped_shifts:
     })
 
 
+###### Export to CSV ######
 keys = results[0].keys()
 with open('wap_results_%s.csv' % datetime.now().strftime("%Y%m%d-%H%M%S"), 'wb') as output_file:
     dict_writer = csv.DictWriter(output_file, keys)
     dict_writer.writeheader()
     dict_writer.writerows(results)
+
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+scope = ['https://spreadsheets.google.com/feeds',
+         'https://www.googleapis.com/auth/drive']
+credentials = ServiceAccountCredentials.from_json_keyfile_name("GPE-WAP-Status-Test-740031faadf4.json", scope)
+
+gc = gspread.authorize(credentials)
+
+# Open a worksheet from spreadsheet with one shot
+worksheet = gc.open("test").sheet1
+for key in keys:
+    worksheet 
