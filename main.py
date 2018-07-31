@@ -1,5 +1,7 @@
 import csv
 import itertools
+import urllib2
+import urllib
 from operator import itemgetter
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -25,7 +27,7 @@ req.add_data(data)
 response = urllib2.urlopen(req)
 
 reader = csv.DictReader(response)
-reader = csv.DictReader(open('2018 - I, Robot-2018-07-27.csv'))
+reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
 
 
 # reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
