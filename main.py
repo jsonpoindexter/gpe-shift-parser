@@ -20,17 +20,19 @@ values = {
     'eventid': 31,
     'submit': 'Download'
 }
+
 opener = urllib2.build_opener()
 data = urllib.urlencode(values)
 req = urllib2.Request(url)
 req.add_data(data)
+req.add_header('Cookie', open("cookies").read())
 response = urllib2.urlopen(req)
 
 reader = csv.DictReader(response)
-reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
 
-
+# Fall back to manually import CSV if needed
 # reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
+
 ###### Filter and sort shifts ######
 shifts = []
 for shift in reader:

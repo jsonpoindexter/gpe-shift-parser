@@ -2,6 +2,7 @@ credentials.json
 token.json
 *.csv
 *.json
+cookies
 
 # Created by https://www.gitignore.io/api/node,intellij+all
 
