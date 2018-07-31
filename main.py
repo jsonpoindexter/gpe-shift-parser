@@ -12,8 +12,23 @@ earliest_wap_date = datetime.strptime('2018-08-17 00:00',
 day_off_date = datetime.strptime('2018-08-23 00:00',
                                  '%Y-%m-%d %H:%M')  # If your first day working is before the 23rd you may take a day off during pre-event.
 
+
+url = 'https://www.babalooey.com/dept/1/admin/reports/events'
+values = {
+    'eventid': 31,
+    'submit': 'Download'
+}
+opener = urllib2.build_opener()
+data = urllib.urlencode(values)
+req = urllib2.Request(url)
+req.add_data(data)
+response = urllib2.urlopen(req)
+
+reader = csv.DictReader(response)
 reader = csv.DictReader(open('2018 - I, Robot-2018-07-27.csv'))
 
+
+# reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
 ###### Filter and sort shifts ######
 shifts = []
 for shift in reader:
@@ -65,7 +80,7 @@ for user_shifts in grouped_shifts:
         required_pre_event_shifts = None
 
     met_main_event_requirements = main_event_shifts >= 2
-    met_event_requirements = required_pre_event_shifts == pre_event_shifts_scheduled
+    met_event_requirements =  pre_event_shifts_scheduled >= required_pre_event_shifts
 
     wap_status = met_main_event_requirements and met_event_requirements
 
@@ -120,7 +135,7 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name("GPE-WAP-Status-T
 gc = gspread.authorize(credentials)
 
 # Open a worksheet from spreadsheet with one shot
-worksheet = gc.open("test").sheet1
+worksheet = gc.open("wap_test").sheet1
 
 
 tempcsv =open(filename)
