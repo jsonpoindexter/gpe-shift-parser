@@ -2,6 +2,7 @@ import csv
 import itertools
 from operator import itemgetter
 from datetime import datetime, timedelta
+from collections import OrderedDict
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -87,24 +88,40 @@ for user_shifts in grouped_shifts:
     # print(json.dumps(user_shifts, indent=2))
 
 
-    results.append({
-        'User ID': user_shifts[0]['User ID'],
-        'User Nickname': user_shifts[0]['User Nickname'],
-        'WAP Status': wap_status,
-        'WAP Issue Date': wap_date.strftime('%Y-%m-%d'),
-        "First shift day scheduled: ": str(first_shift_date),
-        'Pre-Event Shifts Possible': pre_event_shifts_possible,
-        'Pre-event shifts scheduled': pre_event_shifts_scheduled,
-        'Qualifies for Pre-event day off':  qualifies_day_off,
-        'Pre-event shifts required for WAP':  required_pre_event_shifts,
-        'Main-event shifts scheduled':  main_event_shifts,
-        'Must work all pre-event dates':  all_pre_event
-    })
+
+    dict = OrderedDict()
+    dict['User ID'] = user_shifts[0]['User ID']
+    dict['User Nickname'] = user_shifts[0]['User Nickname']
+    dict['WAP Status'] = wap_status
+    dict['WAP Issue Date'] = wap_date.strftime('%Y-%m-%d')
+    dict['First shift day scheduled'] = first_shift_date
+    dict['Pre-Event Shifts Possible'] = pre_event_shifts_possible
+    dict['Pre-event shifts scheduled'] = pre_event_shifts_scheduled
+    dict['Qualifies for Pre-event day off'] = qualifies_day_off
+    dict['Pre-event shifts required for WAP'] = required_pre_event_shifts
+    dict['Main-event shifts scheduled'] = main_event_shifts
+    dict['Must work all pre-event dates'] = all_pre_event
+
+    #
+    # dict = {
+    #     'User ID': user_shifts[0]['User ID'],
+    #     'User Nickname': user_shifts[0]['User Nickname'],
+    #     'WAP Status': wap_status,
+    #     'WAP Issue Date': wap_date.strftime('%Y-%m-%d'),
+    #     'First shift day scheduled': str(first_shift_date),
+    #     'Pre-Event Shifts Possible': pre_event_shifts_possible,
+    #     'Pre-event shifts scheduled': pre_event_shifts_scheduled,
+    #     'Qualifies for Pre-event day off':  qualifies_day_off,
+    #     'Pre-event shifts required for WAP':  required_pre_event_shifts,
+    #     'Main-event shifts scheduled':  main_event_shifts,
+    #     'Must work all pre-event dates':  all_pre_event
+    # }
+    results.append(dict)
 
 
 ###### Export to CSV ######
 keys = results[0].keys()
-filename = 'wap_results_%s.csv' % datetime.now().strftime("%Y%m%d-%H%M%S")
+filename = 'wap_results.csv'
 with open(filename, 'wb') as output_file:
     dict_writer = csv.DictWriter(output_file, keys)
     dict_writer.writeheader()
