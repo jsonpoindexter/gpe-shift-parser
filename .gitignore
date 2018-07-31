@@ -1,6 +1,7 @@
 credentials.json
 token.json
 *.csv
+*.json
 
 # Created by https://www.gitignore.io/api/node,intellij+all
 
