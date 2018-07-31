@@ -38,7 +38,7 @@ for user_shifts in grouped_shifts:
     first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
                             user_shifts])  # Deternube first scheduled shift
     wap_date = max(earliest_wap_date, first_shift_date - timedelta(days=1))  # Determine earliest WAP date
-    pre_event_shifts_possible = ( main_event_start - first_shift_date).days + 1  # Determine how many possible pre-event shifts can be worked
+    pre_event_shifts_possible = max((main_event_start - first_shift_date).days + 1, 0)  # Determine how many possible pre-event shifts can be worked
     qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
     all_pre_event = day_off_date <= first_shift_date < main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
 
