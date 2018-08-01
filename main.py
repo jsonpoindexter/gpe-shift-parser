@@ -13,7 +13,7 @@ earliest_wap_date = datetime.strptime('2018-08-17 00:00',
                                       '%Y-%m-%d %H:%M')  # Earliest date/time that a WAP can be given
 day_off_date = datetime.strptime('2018-08-23 00:00',
                                  '%Y-%m-%d %H:%M')  # If your first day working is before the 23rd you may take a day off during pre-event.
-
+train_r_role_id = '1755'  # User WAP/Credits should only count 1 training (even if 1+ scheduled)
 
 url = 'https://www.babalooey.com/dept/1/admin/reports/events'
 values = {
@@ -53,27 +53,42 @@ for key, value in itertools.groupby(shifts,
 ###### Determin WAP Status ######
 results = list()
 for user_shifts in grouped_shifts:
-    # print("")
-
     first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
                             user_shifts])  # Deternube first scheduled shift
     wap_date = max(earliest_wap_date, first_shift_date - timedelta(days=1))  # Determine earliest WAP date
-    pre_event_shifts_possible = max((main_event_start - first_shift_date).days + 1, 0)  # Determine how many possible pre-event shifts can be worked
+    pre_event_shifts_possible = max((main_event_start - first_shift_date).days + 1,
+                                    0)  # Determine how many possible pre-event shifts can be worked
     qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
     all_pre_event = day_off_date <= first_shift_date < main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
 
     pre_event_shifts_scheduled = []
     main_event_shifts = []
+    pre_event_train_r = 0
+    main_event_train_r = 0
+
     for shift in user_shifts:
         if datetime.strptime(shift['Shift End'],
                              '%Y-%m-%d %H:%M') < main_event_start:  # Get all shifts scheduled before main event
             pre_event_shifts_scheduled.append(shift)
+            if shift['Role ID'] == train_r_role_id:
+                pre_event_train_r += 1
+
         if datetime.strptime(shift['Shift Start'],
                              '%Y-%m-%d %H:%M') > main_event_start:  # Get all shifts scheduled during main event
             main_event_shifts.append(shift)
+            if shift['Role ID'] == train_r_role_id:
+                main_event_train_r += 1
+
     shift_count = len(pre_event_shifts_scheduled) + len(main_event_shifts)
     main_event_shifts = len(main_event_shifts)
     pre_event_shifts_scheduled = len(pre_event_shifts_scheduled)
+
+    # More than 1 Training-Refresh shifts do not count
+    if (pre_event_train_r + main_event_train_r) > 1:
+        if pre_event_train_r - 1 > 0:
+            pre_event_shifts_scheduled = pre_event_shifts_scheduled - pre_event_train_r - 1
+        if main_event_train_r - 1 > 0:
+            main_event_shifts_scheduled = main_event_shifts_scheduled - main_event_train_r - 1
 
     # Determine how many pre-event shifts need to be worked based on previous variables
     if qualifies_day_off:
@@ -84,7 +99,7 @@ for user_shifts in grouped_shifts:
         required_pre_event_shifts = None
 
     met_main_event_requirements = main_event_shifts >= 2
-    met_event_requirements =  pre_event_shifts_scheduled >= required_pre_event_shifts
+    met_event_requirements = pre_event_shifts_scheduled >= required_pre_event_shifts
 
     wap_status = met_main_event_requirements and met_event_requirements
 
@@ -106,8 +121,6 @@ for user_shifts in grouped_shifts:
     # print("issue WAP Date: %s" % wap_date.strftime('%Y-%m-%d'))
     # print(json.dumps(user_shifts, indent=2))
 
-
-
     result = OrderedDict()
     result['User ID'] = user_shifts[0]['User ID']
     result['User Nickname'] = user_shifts[0]['User Nickname']
@@ -120,14 +133,15 @@ for user_shifts in grouped_shifts:
     result['Pre-event shifts required for WAP'] = required_pre_event_shifts
     result['Main-event shifts scheduled'] = main_event_shifts
     result['Must work all pre-event dates'] = all_pre_event
+    result['Pre Event Training-Refresh Shifts'] = pre_event_train_r
+    result['Main Event Training-Refresh Shifts'] = pre_event_train_r
 
     results.append(result)
-
 
 ###### Export to CSV ######
 keys = results[0].keys()
 filename = 'wap_results.csv'
-with open(filename, 'wb') as output_file: # TODO: a way to not convert to csv?
+with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
     dict_writer = csv.DictWriter(output_file, keys)
     dict_writer.writeheader()
     dict_writer.writerows(results)
@@ -141,6 +155,7 @@ gc = gspread.authorize(credentials)
 # Open a worksheet from spreadsheet with one shot
 worksheet = gc.open("wap_test").sheet1
 
-
-tempcsv =open(filename)
-gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", tempcsv)
+tempcsv = open(filename)
+# wap_test 1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4
+# wap_test_dev 1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc
+gc.import_csv("1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc", tempcsv)
