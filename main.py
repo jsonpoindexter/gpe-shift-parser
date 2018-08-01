@@ -61,7 +61,7 @@ for user_shifts in grouped_shifts:
     qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
     all_pre_event = day_off_date <= first_shift_date < main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
 
-    pre_event_shifts_scheduled = []
+    pre_event_shifts = []
     main_event_shifts = []
     pre_event_train_r = 0
     main_event_train_r = 0
@@ -69,7 +69,7 @@ for user_shifts in grouped_shifts:
     for shift in user_shifts:
         if datetime.strptime(shift['Shift End'],
                              '%Y-%m-%d %H:%M') < main_event_start:  # Get all shifts scheduled before main event
-            pre_event_shifts_scheduled.append(shift)
+            pre_event_shifts.append(shift)
             if shift['Role ID'] == train_r_role_id:
                 pre_event_train_r += 1
 
@@ -79,16 +79,19 @@ for user_shifts in grouped_shifts:
             if shift['Role ID'] == train_r_role_id:
                 main_event_train_r += 1
 
-    shift_count = len(pre_event_shifts_scheduled) + len(main_event_shifts)
+    shift_count = len(pre_event_shifts) + len(main_event_shifts)
     main_event_shifts = len(main_event_shifts)
-    pre_event_shifts_scheduled = len(pre_event_shifts_scheduled)
+    pre_event_shifts = len(pre_event_shifts)
 
-    # More than 1 Training-Refresh shifts do not count
     if (pre_event_train_r + main_event_train_r) > 1:
-        if pre_event_train_r - 1 > 0:
-            pre_event_shifts_scheduled = pre_event_shifts_scheduled - pre_event_train_r - 1
-        if main_event_train_r - 1 > 0:
-            main_event_shifts_scheduled = main_event_shifts_scheduled - main_event_train_r - 1
+        if pre_event_train_r == main_event_train_r:
+            pre_event_shifts -= pre_event_train_r - 1
+            main_event_shifts -= main_event_train_r
+        if pre_event_train_r > main_event_train_r:
+            pre_event_shifts -= pre_event_train_r - 1
+            main_event_shifts -= main_event_train_r
+        if pre_event_train_r < main_event_train_r:
+            main_event_shifts -= main_event_train_r - 1
 
     # Determine how many pre-event shifts need to be worked based on previous variables
     if qualifies_day_off:
@@ -99,14 +102,14 @@ for user_shifts in grouped_shifts:
         required_pre_event_shifts = None
 
     met_main_event_requirements = main_event_shifts >= 2
-    met_event_requirements = pre_event_shifts_scheduled >= required_pre_event_shifts
+    met_event_requirements = pre_event_shifts >= required_pre_event_shifts
 
-    wap_status = met_main_event_requirements and met_event_requirements
+    wap_status = met_main_event_requirements and met_event_requirements and first_shift_date < main_event_start
 
     # print("User ID: %s" % user_shifts[0]['User ID'])
     # print("first shift day scheduled: %s" % str(first_shift_date))
     # print("pre-event shifts possible: %s" % pre_event_shifts_possible)
-    # print("pre-event shifts scheduled: %d" % pre_event_shifts_scheduled)
+    # print("pre-event shifts scheduled: %d" % pre_event_shifts)
     # print("pre-event shifts required for wap: %d" % required_pre_event_shifts)
     # print("main event shifts scheduled: %d" % main_event_shifts)
     # print("qualifies for pre-event day off: %r" % qualifies_day_off)
@@ -128,13 +131,14 @@ for user_shifts in grouped_shifts:
     result['WAP Issue Date'] = wap_date.strftime('%Y-%m-%d')
     result['First shift day scheduled'] = first_shift_date
     result['Pre-Event Shifts Possible'] = pre_event_shifts_possible
-    result['Pre-event shifts scheduled'] = pre_event_shifts_scheduled
+    result['Pre-event shifts scheduled'] = pre_event_shifts
     result['Qualifies for Pre-event day off'] = qualifies_day_off
     result['Pre-event shifts required for WAP'] = required_pre_event_shifts
     result['Main-event shifts scheduled'] = main_event_shifts
     result['Must work all pre-event dates'] = all_pre_event
     result['Pre Event Training-Refresh Shifts'] = pre_event_train_r
-    result['Main Event Training-Refresh Shifts'] = pre_event_train_r
+    result['Main Event Training-Refresh Shifts'] = main_event_train_r
+
 
     results.append(result)
 
@@ -158,4 +162,4 @@ worksheet = gc.open("wap_test").sheet1
 tempcsv = open(filename)
 # wap_test 1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4
 # wap_test_dev 1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc
-gc.import_csv("1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc", tempcsv)
+gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", tempcsv)
