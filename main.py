@@ -1,13 +1,7 @@
-import csv
-import itertools
-import urllib2
-import urllib
-import json
-from operator import itemgetter
-from datetime import datetime, timedelta
-from collections import OrderedDict
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import wapstatus
+from datetime import datetime
+
+event_id = 31
 
 main_event_start = datetime.strptime('2018-08-26 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
 main_start_event_end = datetime.strptime('2018-08-27 00:00', '%Y-%m-%d %H:%M')
@@ -18,135 +12,13 @@ day_off_date = datetime.strptime('2018-08-23 00:00',
 train_r_role_id = '1755'  # User WAP/Credits should only count 1 training (even if 1+ scheduled)
 bar_role_id = '1752'
 
-url = 'https://www.babalooey.com/dept/1/admin/reports/events'
-values = {
-    'eventid': 31,
-    'submit': 'Download'
-}
-
-opener = urllib2.build_opener()
-data = urllib.urlencode(values)
-req = urllib2.Request(url)
-req.add_data(data)
-req.add_header('Cookie', open("cookies").read())
-response = urllib2.urlopen(req)
-
-reader = csv.DictReader(response)
-
-# Fall back to manually import CSV if needed
-# reader = csv.DictReader(open('2018 - I, Robot-2018-07-31.csv'))
-
-###### Filter and sort shifts ######
-shifts = []
-for shift in reader:
-    if shift['User ID'] is not None and shift[
-        'User ID'].strip() is not "":  # Filter out shifts that dont contain a (or empty)_  User ID value
-        shifts.append(shift)
-
-shifts = sorted(shifts, key=itemgetter('User ID'))
-
-grouped_shifts = []
-for key, value in itertools.groupby(shifts,
-                                    key=itemgetter('User ID')):  # Group shifts into Lists of Dictionaries by User Id
-    user_shifts = []
-    for user_shift in value:
-        user_shifts.append(user_shift)
-    grouped_shifts.append(user_shifts)
-
-###### Determin WAP Status ######
-results = list()
-for user_shifts in grouped_shifts:
-    first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
-                            user_shifts])  # Determine first scheduled shift
-    wap_date = max(earliest_wap_date, first_shift_date - timedelta(days=1))  # Determine earliest WAP date
-    pre_event_shifts_possible = max((main_event_start - first_shift_date).days + 1,
-                                    0)  # Determine how many possible pre-event shifts can be worked
-    qualifies_day_off = first_shift_date < day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
-    all_pre_event = day_off_date <= first_shift_date < main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
-
-    pre_event_shifts = []
-    main_event_shifts = []
-    pre_event_train_r = 0
-    main_event_train_r = 0
-
-    for shift in user_shifts:
-        if shift['Role ID'] == bar_role_id:
-            continue
-
-        if datetime.strptime(shift['Shift End'],
-                             '%Y-%m-%d %H:%M') < main_event_start:  # Get all shifts scheduled before main event
-            pre_event_shifts.append(shift)
-            if shift['Role ID'] == train_r_role_id:
-                pre_event_train_r += 1
-
-        if datetime.strptime(shift['Shift Start'],
-                             '%Y-%m-%d %H:%M') > main_event_start:  # Get all shifts scheduled during main event
-            main_event_shifts.append(shift)
-            if shift['Role ID'] == train_r_role_id:
-                main_event_train_r += 1
-
-    shift_count = len(pre_event_shifts) + len(main_event_shifts)
-    main_event_shifts = len(main_event_shifts)
-    pre_event_shifts = len(pre_event_shifts)
-
-    if (pre_event_train_r + main_event_train_r) > 1:
-        if pre_event_train_r == main_event_train_r:
-            pre_event_shifts -= pre_event_train_r - 1
-            main_event_shifts -= main_event_train_r
-        if pre_event_train_r > main_event_train_r:
-            pre_event_shifts -= pre_event_train_r - 1
-            main_event_shifts -= main_event_train_r
-        if pre_event_train_r < main_event_train_r:
-            main_event_shifts -= main_event_train_r - 1
-
-    # Determine how many pre-event shifts need to be worked based on previous variables
-    if qualifies_day_off:
-        required_pre_event_shifts = pre_event_shifts_possible - 1
-    elif all_pre_event:
-        required_pre_event_shifts = pre_event_shifts_possible
-    else:
-        required_pre_event_shifts = 0
-
-    met_main_event_requirements = main_event_shifts >= 2
-    met_pre_event_requirements = pre_event_shifts >= required_pre_event_shifts
-
-    wap_status = met_main_event_requirements and met_pre_event_requirements and (first_shift_date <= main_start_event_end)
-
-    result = OrderedDict()
-    result['User ID'] = user_shifts[0]['User ID']
-    result['User Nickname'] = user_shifts[0]['User Nickname']
-    result['WAP Status'] = wap_status
-    result['WAP Issue Date'] = wap_date.strftime('%Y-%m-%d')
-    result['First shift day scheduled'] = first_shift_date
-    result['Pre-Event Shifts Possible'] = pre_event_shifts_possible
-    result['Pre-event shifts scheduled'] = pre_event_shifts
-    result['Qualifies for Pre-event day off'] = qualifies_day_off
-    result['Pre-event shifts required for WAP'] = required_pre_event_shifts
-    result['Main-event shifts scheduled'] = main_event_shifts
-    result['Must work all pre-event dates'] = all_pre_event
-    result['Pre Event Training-Refresh Shifts'] = pre_event_train_r
-    result['Main Event Training-Refresh Shifts'] = main_event_train_r
-
-    results.append(result)
-
-###### Export to CSV ######
-keys = results[0].keys()
-filename = 'wap_results.csv'
-with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
-    dict_writer = csv.DictWriter(output_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(results)
-
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
-credentials = ServiceAccountCredentials.from_json_keyfile_name("GPE-WAP-Status-Test-740031faadf4.json", scope)
-
-gc = gspread.authorize(credentials)
-
-# Open a worksheet from spreadsheet with one shot
-worksheet = gc.open("wap_test").sheet1
-
-tempcsv = open(filename)
-# wap_test 1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4
-# wap_test_dev 1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc
-gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", tempcsv)
+wapstatus = wapstatus.WapStatus(
+    event_id,
+    main_event_start,
+    main_start_event_end,
+    earliest_wap_date,
+    day_off_date,
+    train_r_role_id,
+    bar_role_id
+)
+wapstatus.run()
