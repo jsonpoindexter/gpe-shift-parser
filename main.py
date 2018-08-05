@@ -71,7 +71,7 @@ for user_shifts in grouped_shifts:
 
     for shift in user_shifts:
         if shift['Role ID'] == bar_role_id:
-            pass
+            continue
 
         if datetime.strptime(shift['Shift End'],
                              '%Y-%m-%d %H:%M') < main_event_start:  # Get all shifts scheduled before main event
@@ -84,9 +84,6 @@ for user_shifts in grouped_shifts:
             main_event_shifts.append(shift)
             if shift['Role ID'] == train_r_role_id:
                 main_event_train_r += 1
-
-    if  user_shifts[0]['User ID'] == '100':
-        print(json.dumps(pre_event_shifts, indent=2))
 
     shift_count = len(pre_event_shifts) + len(main_event_shifts)
     main_event_shifts = len(main_event_shifts)
@@ -113,30 +110,7 @@ for user_shifts in grouped_shifts:
     met_main_event_requirements = main_event_shifts >= 2
     met_pre_event_requirements = pre_event_shifts >= required_pre_event_shifts
 
-    if  user_shifts[0]['User ID'] == '100':
-        print(met_main_event_requirements)
-        print(met_pre_event_requirements)
-        print(first_shift_date <= main_start_event_end)
-
     wap_status = met_main_event_requirements and met_pre_event_requirements and (first_shift_date <= main_start_event_end)
-
-    # print("User ID: %s" % user_shifts[0]['User ID'])
-    # print("first shift day scheduled: %s" % str(first_shift_date))
-    # print("pre-event shifts possible: %s" % pre_event_shifts_possible)
-    # print("pre-event shifts scheduled: %d" % pre_event_shifts)
-    # print("pre-event shifts required for wap: %d" % required_pre_event_shifts)
-    # print("main event shifts scheduled: %d" % main_event_shifts)
-    # print("qualifies for pre-event day off: %r" % qualifies_day_off)
-    # print("must work all pre-event dates: %r" % all_pre_event)
-    # print("earliest WAP date: %s", wap_date.strftime("%Y-%m-%d"))
-    # print("WAP status: %r" % wap_status)
-    # if not wap_status:
-    #     if not met_main_event_requirements:
-    #         print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
-    #     if not met_pre_event_requirements:
-    #         print("WAP False reason: required main-event shifts are not equal to main-event shifts scheduled")
-    # print("issue WAP Date: %s" % wap_date.strftime('%Y-%m-%d'))
-    # print(json.dumps(user_shifts, indent=2))
 
     result = OrderedDict()
     result['User ID'] = user_shifts[0]['User ID']
@@ -153,10 +127,7 @@ for user_shifts in grouped_shifts:
     result['Pre Event Training-Refresh Shifts'] = pre_event_train_r
     result['Main Event Training-Refresh Shifts'] = main_event_train_r
 
-
     results.append(result)
-
-exit()
 
 ###### Export to CSV ######
 keys = results[0].keys()
@@ -178,4 +149,4 @@ worksheet = gc.open("wap_test").sheet1
 tempcsv = open(filename)
 # wap_test 1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4
 # wap_test_dev 1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc
-gc.import_csv("1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc", tempcsv)
+gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", tempcsv)
