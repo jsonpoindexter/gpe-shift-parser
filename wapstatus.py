@@ -105,9 +105,6 @@ class WapStatus:
         results = list()
         for user_shifts in grouped_shifts:
             if user_shifts[0]['User ID'].strip() is not "": # ignore unassigned shifts
-                if user_shifts[0]['User Nickname'] == 'Dino':
-                    print(user_shifts)
-                    print(json.dumps(user_shifts, indent=2))
                 results.append(self.determine_wap_status(user_shifts))
 
         ###### Export to CSV ######
