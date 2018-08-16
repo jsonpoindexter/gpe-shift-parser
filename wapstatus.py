@@ -47,7 +47,7 @@ class WapStatus:
                     pre_event_train_r += 1
 
             if datetime.strptime(shift['Shift Start'],
-                                 '%Y-%m-%d %H:%M') > self.main_event_start:  # Get all shifts scheduled during main event
+                                 '%Y-%m-%d %H:%M') >= self.main_event_start:  # Get all shifts scheduled during main event
                 main_event_shifts.append(shift)
                 if shift['Role ID'] == self.train_r_role_id:
                     main_event_train_r += 1
