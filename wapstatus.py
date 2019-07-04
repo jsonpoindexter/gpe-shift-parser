@@ -1,9 +1,10 @@
 import csv
 import itertools
-import urllib2
 import urllib
 import babalooey
 import json
+import time
+from pg import DB
 from operator import itemgetter
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -22,6 +23,7 @@ class WapStatus:
         self.day_off_date = day_off_date
         self.train_r_role_id = train_r_role_id
         self.bar_role_id = bar_role_id
+        self.db = DB(dbname='wap_test', host='localhost', port=5432, user='postgres', passwd='postgres')
 
     def determine_wap_status(self, user_shifts):
         first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
@@ -105,26 +107,28 @@ class WapStatus:
         results = list()
         for user_shifts in grouped_shifts:
             if user_shifts[0]['User ID'].strip() is not "": # ignore unassigned shifts
-                results.append(self.determine_wap_status(user_shifts))
+                result = self.determine_wap_status(user_shifts)
+                self.db.insert('wap_results',
+                    id = result['User ID'],
+                    nickname = result['User Nickname'],
+                    status = result['WAP Status'] ,
+                    issue_date = result['WAP Issue Date'],
+                    first_day = result['First shift day scheduled'],
+                    pre_event_shifts_possible = result['Pre-Event Shifts Possible'],
+                    pre_event_shifts_scheduled = result['Pre-event shifts scheduled'],
+                    pre_event_day_off = result['Qualifies for Pre-event day off'],
+                    pre_event_shifts_required = result['Pre-event shifts required for WAP'],
+                    main_event_shifts_scheduled = result['Main-event shifts scheduled'],
+                    work_all_pre_event_days = result['Must work all pre-event dates'],
+                    pre_event_training_refresh_shifts = result['Pre Event Training-Refresh Shifts'],
+                    main_event_training_refresh_shifts = result['Main Event Training-Refresh Shifts'])
+                results.append(result)
+        self.db.close()
 
         ###### Export to CSV ######
         keys = results[0].keys()
-        filename = 'wap_results.csv'
+        filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
         with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(results)
-
-        scope = ['https://spreadsheets.google.com/feeds',
-                 'https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name("GPE-WAP-Status-Test-740031faadf4.json", scope)
-
-        gc = gspread.authorize(credentials)
-
-        # Open a worksheet from spreadsheet with one shot
-        worksheet = gc.open("wap_test").sheet1
-
-        tempcsv = open(filename)
-        # wap_test 1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4
-        # wap_test_dev 1TQsB5BFvCCB_d0CKI2L44BYJDAigrS2MN5KpdHsErZc
-        gc.import_csv("1zQ4I1vwBuoNNKdEYTfgiYXSiGXGXIRNdWrXdcVbxrR4", tempcsv)
