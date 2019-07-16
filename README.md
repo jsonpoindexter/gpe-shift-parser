@@ -19,7 +19,8 @@ CREATE TABLE wap_results (
    main_event_shifts_scheduled INT NOT NULL,
    work_all_pre_event_days BOOLEAN NOT NULL,
    pre_event_training_refresh_shifts INT NOT NULL,
-   main_event_training_refresh_shifts INT NOT NULL
+   main_event_training_refresh_shifts INT NOT NULL,
+   timestamp timestamp default current_timestamp
 );
 ```
 
