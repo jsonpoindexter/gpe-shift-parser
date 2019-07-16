@@ -12,8 +12,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-
-
 class WapStatus:
     def __init__(self, event_id, main_event_start, main_start_event_end, earliest_wap_date, day_off_date, train_r_role_id, bar_role_id):
         self.event_id = event_id
@@ -24,6 +22,9 @@ class WapStatus:
         self.train_r_role_id = train_r_role_id
         self.bar_role_id = bar_role_id
         self.db = DB(dbname='wap_test', host='localhost', port=5432, user='postgres', passwd='postgres')
+        self.changedToFalseWap = list()
+        self.changedToTrueWap = list()
+        self.newTrueWap = list()
 
     def determine_wap_status(self, user_shifts):
         first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
@@ -98,37 +99,68 @@ class WapStatus:
 
         return result
 
+    def check_last_wap(self, wap_result):
+        prev_wap_result = self.db.query("""
+            select * from (
+                select
+                    id,
+                    timestamp,
+                    status,
+                    row_number() over(partition by id order by timestamp desc) as rn
+                from
+                    wap_results
+            ) t
+            where t.rn = 1 AND t.id = $1
+        """, wap_result['User ID']).getresult()
+        if prev_wap_result:
+            if prev_wap_result[0][2] != wap_result['WAP Status']:
+                if wap_result['WAP Status'] == True:
+                    self.changedToTrueWap.append(wap_result)
+                else:
+                    self.changedToFalseWap.append(wap_result)
+        else:
+            if wap_result['WAP Status'] == True:
+                self.newTrueWap.append(wap_result)
+
+
+
     def run(self):
         file = open("babalooey-cred")
         baballooey_cred = file.read().split(',')
         client = babalooey.Babalooey(baballooey_cred[0], baballooey_cred[1])
         grouped_shifts = client.get_event_report(self.event_id)
+
         ###### Determin WAP Status ######
-        results = list()
+        wap_results = list()
         for user_shifts in grouped_shifts:
             if user_shifts[0]['User ID'].strip() is not "": # ignore unassigned shifts
-                result = self.determine_wap_status(user_shifts)
-                self.db.insert('wap_results',
-                    id = result['User ID'],
-                    nickname = result['User Nickname'],
-                    status = result['WAP Status'] ,
-                    issue_date = result['WAP Issue Date'],
-                    first_day = result['First shift day scheduled'],
-                    pre_event_shifts_possible = result['Pre-Event Shifts Possible'],
-                    pre_event_shifts_scheduled = result['Pre-event shifts scheduled'],
-                    pre_event_day_off = result['Qualifies for Pre-event day off'],
-                    pre_event_shifts_required = result['Pre-event shifts required for WAP'],
-                    main_event_shifts_scheduled = result['Main-event shifts scheduled'],
-                    work_all_pre_event_days = result['Must work all pre-event dates'],
-                    pre_event_training_refresh_shifts = result['Pre Event Training-Refresh Shifts'],
-                    main_event_training_refresh_shifts = result['Main Event Training-Refresh Shifts'])
-                results.append(result)
+                wap_result = self.determine_wap_status(user_shifts)
+                self.check_last_wap(wap_result)
+                # self.db.insert('wap_results',
+                #     id = wap_result['User ID'],
+                #     nickname = wap_result['User Nickname'],
+                #     status = wap_result['WAP Status'] ,
+                #     issue_date = wap_result['WAP Issue Date'],
+                #     first_day = wap_result['First shift day scheduled'],
+                #     pre_event_shifts_possible = wap_result['Pre-Event Shifts Possible'],
+                #     pre_event_shifts_scheduled = wap_result['Pre-event shifts scheduled'],
+                #     pre_event_day_off = wap_result['Qualifies for Pre-event day off'],
+                #     pre_event_shifts_required = wap_result['Pre-event shifts required for WAP'],
+                #     main_event_shifts_scheduled = wap_result['Main-event shifts scheduled'],
+                #     work_all_pre_event_days = wap_result['Must work all pre-event dates'],
+                #     pre_event_training_refresh_shifts = wap_result['Pre Event Training-Refresh Shifts'],
+                #     main_event_training_refresh_shifts = wap_result['Main Event Training-Refresh Shifts'])
+                wap_results.append(wap_result)
         self.db.close()
 
+        print(self.changedToFalseWap)
+        print(self.changedToTrueWap)
+        print(self.newTrueWap)
+
         ###### Export to CSV ######
-        keys = results[0].keys()
-        filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
-        with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(results)
+        # keys = results[0].keys()
+        # filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
+        # with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
+        #     dict_writer = csv.DictWriter(output_file, keys)
+        #     dict_writer.writeheader()
+        #     dict_writer.writerows(results)
