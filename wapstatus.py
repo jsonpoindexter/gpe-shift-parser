@@ -161,7 +161,7 @@ class WapStatus:
         wap_results = self.determine_wap_status(grouped_shifts)
         (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
         self.insert_into_db(wap_results)
-        self.export_to_csv
+        self.export_to_csv()
         print('changedToFalseWap:', changedToFalseWap)
         print('changedToTrueWap:', changedToTrueWap)
         print('newTrueWap:', newTrueWap)
