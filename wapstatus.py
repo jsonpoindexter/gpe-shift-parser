@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+import os
 
 
 class WapStatus:
@@ -148,10 +151,18 @@ class WapStatus:
     def export_to_csv(self, wap_results):
         keys = wap_results[0].keys()
         filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
-        with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
-            dict_writer = csv.DictWriter(output_file, keys)
-            dict_writer.writeheader()
-            dict_writer.writerows(wap_results)
+        scope = ['https://spreadsheets.google.com/feeds',
+         'https://www.googleapis.com/auth/drive']
+
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+        gc = gspread.authorize(credentials)
+
+        sh = gc.create("test1234")
+        sh.share('jackyfryers@gmail.com', perm_type='user', role='writer')
+        # with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
+        #     dict_writer = csv.DictWriter(output_file, keys)
+        #     dict_writer.writeheader()
+        #     dict_writer.writerows(wap_results)
 
     def run(self):
         file = open("babalooey-cred")
@@ -160,7 +171,7 @@ class WapStatus:
         grouped_shifts = client.get_event_report(self.event_id)
         wap_results = self.determine_wap_status(grouped_shifts)
         (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
-        self.insert_into_db(wap_results)
+        # self.insert_into_db(wap_results)
         self.export_to_csv(wap_results)
         print('changedToFalseWap:', changedToFalseWap)
         print('changedToTrueWap:', changedToTrueWap)
