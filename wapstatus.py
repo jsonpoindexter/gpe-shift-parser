@@ -13,6 +13,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import os
+import io
 
 
 class WapStatus:
@@ -151,18 +152,29 @@ class WapStatus:
     def export_to_csv(self, wap_results):
         keys = wap_results[0].keys()
         filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
-        scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
 
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-        gc = gspread.authorize(credentials)
 
-        sh = gc.create("test1234")
-        sh.share('jackyfryers@gmail.com', perm_type='user', role='writer')
-        # with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
-        #     dict_writer = csv.DictWriter(output_file, keys)
-        #     dict_writer.writeheader()
-        #     dict_writer.writerows(wap_results)
+        g_login = GoogleAuth()
+        g_login.LocalWebserverAuth()
+        drive = GoogleDrive(g_login)
+
+        # scope = ['https://spreadsheets.google.com/feeds',
+        #  'https://www.googleapis.com/auth/drive']
+        # credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+        # gc = gspread.authorize(credentials)
+        # sh = gc.create("test1234")
+        # sh.share('jackyfryers@gmail.com', perm_type='user', role='writer')
+
+        with open(filename, 'wrb') as output_file:  # TODO: a way to not convert to csv?
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(wap_results)
+
+        with io.open(filename, mode='r', encoding='utf-8') as output_file:
+            file_drive = drive.CreateFile({filename:os.path.basename(output_file.name) })
+            file_drive.SetContentString(output_file.read())
+            file_drive.Upload()
+
 
     def run(self):
         file = open("babalooey-cred")
@@ -171,8 +183,8 @@ class WapStatus:
         grouped_shifts = client.get_event_report(self.event_id)
         wap_results = self.determine_wap_status(grouped_shifts)
         (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
-        self.insert_into_db(wap_results)
-        self.export_to_csv()
+        # self.insert_into_db(wap_results)
+        self.export_to_csv(wap_results)
         print('changedToFalseWap:', changedToFalseWap)
         print('changedToTrueWap:', changedToTrueWap)
         print('newTrueWap:', newTrueWap)
