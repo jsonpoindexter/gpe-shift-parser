@@ -4,7 +4,8 @@ import urllib
 import babalooey
 import json
 import time
-from pg import DB
+import sys
+# from pg import DB
 from operator import itemgetter
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -12,12 +13,20 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-import os
 import io
+import pickle
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from apiclient.http import MediaFileUpload
+
+# If modifying these scopes, delete the file token.pickle.
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
 class WapStatus:
-    def __init__(self, event_id, main_event_start, main_start_event_end, earliest_wap_date, day_off_date, train_r_role_id, bar_role_id):
+    def __init__(self, event_id, main_event_start, main_start_event_end, earliest_wap_date, day_off_date, train_r_role_id, bar_role_id, parent_ids):
         self.event_id = event_id
         self.main_event_start = main_event_start
         self.main_start_event_end = main_start_event_end
@@ -25,7 +34,8 @@ class WapStatus:
         self.day_off_date = day_off_date
         self.train_r_role_id = train_r_role_id
         self.bar_role_id = bar_role_id
-        self.db = DB(dbname='wap_test', host='localhost', port=5432, user='postgres', passwd='postgres')
+        self.parent_ids = parent_ids
+        # self.db = DB(dbname='wap_test', host='localhost', port=5432, user='postgres', passwd='postgres')
 
     def determine_wap_status(self, grouped_shifts):
         wap_results = list()
@@ -153,28 +163,41 @@ class WapStatus:
         keys = wap_results[0].keys()
         filename = 'wap_results-' + time.strftime("%Y%m%d-%H%M%S") + '.csv'
 
-
-        g_login = GoogleAuth()
-        g_login.LocalWebserverAuth()
-        drive = GoogleDrive(g_login)
-
-        # scope = ['https://spreadsheets.google.com/feeds',
-        #  'https://www.googleapis.com/auth/drive']
-        # credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-        # gc = gspread.authorize(credentials)
-        # sh = gc.create("test1234")
-        # sh.share('jackyfryers@gmail.com', perm_type='user', role='writer')
-
-        with open(filename, 'wrb') as output_file:  # TODO: a way to not convert to csv?
+        with open(filename, 'wb') as output_file:  # TODO: a way to not convert to csv?
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(wap_results)
+        output_file.close()
 
-        with io.open(filename, mode='r', encoding='utf-8') as output_file:
-            file_drive = drive.CreateFile({filename:os.path.basename(output_file.name) })
-            file_drive.SetContentString(output_file.read())
-            file_drive.Upload()
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
 
+        # try:
+        drive_service = build('drive', 'v3', credentials=creds)
+        file_metadata = {
+            'name': filename,
+            'mimeType': 'application/vnd.google-apps.spreadsheet',
+            'parents' : self.parent_ids
+        }
+        media = MediaFileUpload(filename, mimetype='text/csv', resumable=True)
+        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id')
+        os.remove(filename)
 
     def run(self):
         file = open("babalooey-cred")
@@ -182,13 +205,13 @@ class WapStatus:
         client = babalooey.Babalooey(baballooey_cred[0], baballooey_cred[1])
         grouped_shifts = client.get_event_report(self.event_id)
         wap_results = self.determine_wap_status(grouped_shifts)
-        (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
+        # (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
         # self.insert_into_db(wap_results)
         self.export_to_csv(wap_results)
-        print('changedToFalseWap:', changedToFalseWap)
-        print('changedToTrueWap:', changedToTrueWap)
-        print('newTrueWap:', newTrueWap)
-        self.db.close()
+        # print('changedToFalseWap:', changedToFalseWap)
+        # print('changedToTrueWap:', changedToTrueWap)
+        # print('newTrueWap:', newTrueWap)
+        # self.db.close()
 
 
 
