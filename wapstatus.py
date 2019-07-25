@@ -1,21 +1,10 @@
-import csv
-import itertools
-import urllib
-import babalooey
-import json
-import time
-import sys
+import csv, itertools, urllib, babalooey, json, time, sys
 # from pg import DB
 from operator import itemgetter
 from datetime import datetime, timedelta
 from collections import OrderedDict
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-import io
 import pickle
-import os.path
+import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -188,7 +177,6 @@ class WapStatus:
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
 
-        # try:
         drive_service = build('drive', 'v3', credentials=creds)
         file_metadata = {
             'name': filename,
@@ -196,7 +184,7 @@ class WapStatus:
             'parents' : self.parent_ids
         }
         media = MediaFileUpload(filename, mimetype='text/csv', resumable=True)
-        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id')
+        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
         os.remove(filename)
 
     def run(self):
