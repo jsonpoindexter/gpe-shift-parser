@@ -32,7 +32,7 @@ class WapStatus:
             if user_shifts[0]['User ID'].strip() is not "": # ignore unassigned shifts
                 first_shift_date = min([datetime.strptime(shift['Shift Start'], '%Y-%m-%d %H:%M') for shift in
                                         user_shifts])  # Determine first scheduled shift
-                wap_date = max(self.earliest_wap_date, first_shift_date - timedelta(days=1))  # Determine earliest WAP date
+                wap_date = max(self.earliest_wap_date, first_shift_date - timedelta(days=2))  # Determine earliest WAP date
                 pre_event_shifts_possible = max((self.main_event_start - first_shift_date.replace(hour = 0, minute = 0, second = 0, microsecond = 0)).days,
                                                 0)  # Determine how many possible pre-event shifts can be worked
                 qualifies_day_off = first_shift_date < self.day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
@@ -45,6 +45,8 @@ class WapStatus:
 
                 for shift in user_shifts:
                     if shift['Role ID'] == self.bar_role_id:
+                        continue
+                    if shift['Role ID'] == self.train_r_role_id:
                         continue
                     if datetime.strptime(shift['Shift End'],
                                         '%Y-%m-%d %H:%M') <= self.main_event_start:  # Get all shifts scheduled before main event
@@ -62,16 +64,7 @@ class WapStatus:
                 main_event_shifts = len(main_event_shifts)
                 pre_event_shifts = len(pre_event_shifts)
 
-                if (pre_event_train_r + main_event_train_r) > 1:
-                    if pre_event_train_r == main_event_train_r:
-                        pre_event_shifts -= pre_event_train_r - 1
-                        main_event_shifts -= main_event_train_r
-                    if pre_event_train_r > main_event_train_r:
-                        pre_event_shifts -= pre_event_train_r - 1
-                        main_event_shifts -= main_event_train_r
-                    if pre_event_train_r < main_event_train_r:
-                        main_event_shifts -= main_event_train_r - 1
-
+              
                 # Determine how many pre-event shifts need to be worked based on previous variables
                 if qualifies_day_off:
                     required_pre_event_shifts = pre_event_shifts_possible - 1
