@@ -40,8 +40,6 @@ class WapStatus:
 
                 pre_event_shifts = []
                 main_event_shifts = []
-                pre_event_train_r = 0
-                main_event_train_r = 0
 
                 for shift in user_shifts:
                     # Skip bare roles and training refresh roles from counting towards WAP
@@ -87,8 +85,6 @@ class WapStatus:
                 result['Pre-event shifts required for WAP'] = required_pre_event_shifts
                 result['Main-event shifts scheduled'] = main_event_shifts
                 result['Must work all pre-event dates'] = all_pre_event
-                result['Pre Event Training-Refresh Shifts'] = pre_event_train_r
-                result['Main Event Training-Refresh Shifts'] = main_event_train_r
                 wap_results.append(result)
 
         return wap_results
@@ -134,9 +130,7 @@ class WapStatus:
                 pre_event_day_off = wap_result['Qualifies for Pre-event day off'],
                 pre_event_shifts_required = wap_result['Pre-event shifts required for WAP'],
                 main_event_shifts_scheduled = wap_result['Main-event shifts scheduled'],
-                work_all_pre_event_days = wap_result['Must work all pre-event dates'],
-                pre_event_training_refresh_shifts = wap_result['Pre Event Training-Refresh Shifts'],
-                main_event_training_refresh_shifts = wap_result['Main Event Training-Refresh Shifts'])
+                work_all_pre_event_days = wap_result['Must work all pre-event dates'])
 
     def export_to_csv(self, wap_results):
         keys = wap_results[0].keys()
