@@ -1,17 +1,19 @@
 import wapstatus
 from datetime import datetime
 
-event_id = 38
+event_id = 47  # Babalooey event ID found by going to https://www.babalooey.com/dept/1/admin/reports/events and
+# inspecting the dropdown list
 
-main_event_start = datetime.strptime('2019-08-25 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
-main_start_event_end = datetime.strptime('2019-08-26 00:00', '%Y-%m-%d %H:%M')
-earliest_wap_date = datetime.strptime('2019-08-16 00:00',
+main_event_start = datetime.strptime('2022-08-28 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
+main_start_event_end = datetime.strptime('2022-08-29 00:00', '%Y-%m-%d %H:%M')
+earliest_wap_date = datetime.strptime('2022-08-18 00:00',
                                       '%Y-%m-%d %H:%M')  # Earliest date/time that a WAP can be given
-day_off_date = datetime.strptime('2019-08-22 00:00',
-                                 '%Y-%m-%d %H:%M')  # If your first day working is before the 23rd you may take a day off during pre-event.
-train_r_role_id = '2200'  # User WAP/Credits should only count 1 training (even if 1+ scheduled)
-bar_role_id = '2184'
-parent_ids = ['1VJvc4riiDHdTDQhVGRGlQKH93DxQwOG6'] # Google Drive Parent folder ID
+day_off_date = datetime.strptime('2022-08-23 00:00',
+                                 '%Y-%m-%d %H:%M')  # If your first day working is before the 24th you may take a day
+# off during pre-event.
+train_r_role_id = '2745'  # Refresh training does not count towards WAP
+bar_role_id = '2726' # Bare role does not count towards WAP
+parent_ids = ['PARENT_ID']  # Google Drive Parent folder ID
 
 wapstatus = wapstatus.WapStatus(
     event_id,
