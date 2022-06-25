@@ -8,7 +8,7 @@ import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from apiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -189,8 +189,8 @@ class WapStatus:
 
     def run(self):
         file = open("babalooey-cred")
-        baballooey_cred = file.read().split(',')
-        client = babalooey.Babalooey(baballooey_cred[0], baballooey_cred[1])
+        babalooey_cred = file.read().split(',')
+        client = babalooey.Babalooey(babalooey_cred[0], babalooey_cred[1])
         grouped_shifts = client.get_event_report(self.event_id)
         wap_results = self.determine_wap_status(grouped_shifts)
         # (newTrueWap, changedToTrueWap, changedToFalseWap) = self.check_last_wap(wap_results)
