@@ -44,19 +44,16 @@ class WapStatus:
                 main_event_train_r = 0
 
                 for shift in user_shifts:
-                    if shift['Role ID'] == self.bar_role_id:
+                    # Skip bare roles and training refresh roles from counting towards WAP
+                    if shift['Role ID'] == self.bar_role_id or shift['Role ID'] == self.train_r_role_id:
                         continue
                     if datetime.strptime(shift['Shift End'],
                                         '%Y-%m-%d %H:%M') <= self.main_event_start:  # Get all shifts scheduled before main event
                         pre_event_shifts.append(shift)
-                        if shift['Role ID'] == self.train_r_role_id:
-                            pre_event_train_r += 1
 
                     if datetime.strptime(shift['Shift Start'],
                                         '%Y-%m-%d %H:%M') >= self.main_event_start:  # Get all shifts scheduled during main event
                         main_event_shifts.append(shift)
-                        if shift['Role ID'] == self.train_r_role_id:
-                            main_event_train_r += 1
 
                 shift_count = len(pre_event_shifts) + len(main_event_shifts)
                 main_event_shifts = len(main_event_shifts)
