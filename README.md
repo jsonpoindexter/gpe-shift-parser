@@ -3,26 +3,10 @@ Parse shifts from CSV and put them in a google sheets document.
 
 # Requirements
 * Python 2
-`pip install urllib2`
-`CREATE DATABASE wap;`
-```
-CREATE TABLE wap_results (
-   id INT NOT NULL,
-   nickname TEXT NOT NULL,
-   status BOOLEAN NOT NULL,
-   issue_date DATE NOT NULL,
-   first_day DATE NOT NULL,
-   pre_event_shifts_possible INT NOT NULL,
-   pre_event_shifts_scheduled INT NOT NULL,
-   pre_event_day_off BOOLEAN NOT NULL,
-   pre_event_shifts_required INT NOT NULL,
-   main_event_shifts_scheduled INT NOT NULL,
-   work_all_pre_event_days BOOLEAN NOT NULL,
-   pre_event_training_refresh_shifts INT NOT NULL,
-   main_event_training_refresh_shifts INT NOT NULL,
-   timestamp timestamp default current_timestamp
-);
-```
+* `pip install urllib2`
+* [Google Cloud Credentials](https://console.cloud.google.com/) (for editing gdrive/gsheets)
+* [Babalooey](https://www.babalooey.com/) Admin Credentials
+* Access to [output folder](https://drive.google.com/drive/u/0/folders/1Yvrx0Nd9NbfWW4-JRVhDOFu-HCVhhEnb): 
 
 # Run
 `python main.py`
