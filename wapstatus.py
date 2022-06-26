@@ -84,8 +84,9 @@ class WapStatus:
             met_main_event_requirements = main_event_shifts >= 2
             met_pre_event_requirements = pre_event_shifts >= required_pre_event_shifts
 
-            wap_status = met_main_event_requirements and met_pre_event_requirements and (
-                    first_shift_date <= self.main_start_event_end)
+            # If a user has met pre event and main event requirements OR their first shift starts on main_event_start day then set wap status to True
+            wap_status = ((
+                    first_shift_date <= self.main_start_event_end) and met_main_event_requirements and met_pre_event_requirements) or first_shift_date.replace(hour=0, minute=0, second=0, microsecond=0) == self.main_event_start
 
             result = OrderedDict()
             result['User ID'] = user_shifts[0]['User ID']
