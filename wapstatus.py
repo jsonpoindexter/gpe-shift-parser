@@ -35,8 +35,8 @@ class WapStatus:
                 wap_date = max(self.earliest_wap_date, first_shift_date - timedelta(days=2))  # Determine earliest WAP date
                 pre_event_shifts_possible = max((self.main_event_start - first_shift_date.replace(hour = 0, minute = 0, second = 0, microsecond = 0)).days,
                                                 0)  # Determine how many possible pre-event shifts can be worked
-                qualifies_day_off = first_shift_date < self.day_off_date  # If first day working is before the 23rd user may take a day off during pre-event.
-                all_pre_event = self.day_off_date <= first_shift_date < self.main_event_start  # If first working shift is on the 23rd then user must work all 3 days Pre-Event (23, 24, 25).
+                qualifies_day_off = first_shift_date < self.day_off_date  # If first day working is before the day_off_date user may potentially take a day off during pre-event.
+                all_pre_event = self.day_off_date <= first_shift_date < self.main_event_start  # If first working shift is on the day_off_date then user must work all 3 days Pre-Event (23, 24, 25).
 
                 pre_event_shifts = []
                 main_event_shifts = []
