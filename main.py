@@ -4,6 +4,7 @@ from datetime import datetime
 event_id = 47  # Babalooey event ID found by going to https://www.babalooey.com/dept/1/admin/reports/events and
 # inspecting the dropdown list
 
+pre_event_start = datetime.strptime('2022-08-06 00:00', '%Y-%m-%d %H:%M')  # Ignore shifts before this date
 main_event_start = datetime.strptime('2022-08-28 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
 earliest_wap_date = datetime.strptime('2022-08-16 00:00',
                                       '%Y-%m-%d %H:%M')  # Earliest date/time that a WAP can be given
@@ -15,6 +16,7 @@ parent_ids = ['PARENT_ID']  # Google Drive Parent folder ID
 
 wapstatus = wapstatus.WapStatus(
     event_id,
+    pre_event_start,
     main_event_start,
     earliest_wap_date,
     day_off_date,
