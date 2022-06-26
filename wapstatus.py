@@ -92,7 +92,10 @@ class WapStatus:
             result['User ID'] = user_shifts[0]['User ID']
             result['User Nickname'] = user_shifts[0]['User Nickname']
             result['WAP Status'] = wap_status
-            result['WAP Issue Date'] = wap_date.strftime('%Y-%m-%d')
+            if wap_status:
+                result['WAP Issue Date'] = wap_date.strftime('%Y-%m-%d')
+            else:
+                result['WAP Issue Date'] = None
             result['First shift day scheduled'] = first_shift_date.strftime('%Y-%m-%d %H:%M')
             result['Pre-Event Shifts Possible'] = pre_event_shifts_possible
             result['Pre-event shifts scheduled'] = pre_event_shifts
