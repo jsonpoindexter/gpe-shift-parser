@@ -55,7 +55,7 @@ class TestUM(unittest.TestCase):
         result['User ID'] = grouped_shifts[0][0]['User ID']
         result['User Nickname'] = grouped_shifts[0][0]['User Nickname']
         result['WAP Status'] = False
-        result['WAP Issue Date'] = '2022-08-18'
+        result['WAP Issue Date'] = None
         result['First shift day scheduled'] = '2022-08-20 18:00'
         result['Pre-Event Shifts Possible'] = 8
         result['Pre-event shifts scheduled'] = 1
@@ -129,7 +129,7 @@ class TestUM(unittest.TestCase):
         result['User ID'] = grouped_shifts[0][0]['User ID']
         result['User Nickname'] = grouped_shifts[0][0]['User Nickname']
         result['WAP Status'] = False
-        result['WAP Issue Date'] = '2022-08-18'
+        result['WAP Issue Date'] = None
         result['First shift day scheduled'] = '2022-08-20 18:00'
         result['Pre-Event Shifts Possible'] = 8
         result['Pre-event shifts scheduled'] = 6
@@ -201,7 +201,7 @@ class TestUM(unittest.TestCase):
         expected_result['User ID'] = grouped_shifts[0][0]['User ID']
         expected_result['User Nickname'] = grouped_shifts[0][0]['User Nickname']
         expected_result['WAP Status'] = False
-        expected_result['WAP Issue Date'] = '2022-08-18'
+        expected_result['WAP Issue Date'] = None
         expected_result['First shift day scheduled'] = '2022-08-20 18:00'
         expected_result['Pre-Event Shifts Possible'] = 8
         expected_result['Pre-event shifts scheduled'] = 1
@@ -261,7 +261,7 @@ class TestUM(unittest.TestCase):
         expected_result['User ID'] = grouped_shifts[0][0]['User ID']
         expected_result['User Nickname'] = grouped_shifts[0][0]['User Nickname']
         expected_result['WAP Status'] = False
-        expected_result['WAP Issue Date'] = '2022-08-18'
+        expected_result['WAP Issue Date'] = None
         expected_result['First shift day scheduled'] = '2022-08-20 18:00'
         expected_result['Pre-Event Shifts Possible'] = 8
         expected_result['Pre-event shifts scheduled'] = 1
@@ -317,6 +317,8 @@ class TestUM(unittest.TestCase):
         expected_result['Must work all pre-event dates'] = False
 
         result = wstatus.determine_wap_status(grouped_shifts)[0]
+
+        print(json.dumps(result, indent=2))
         self.assertEqual(result['WAP Status'], expected_result['WAP Status'])
         self.assertEqual(result['WAP Issue Date'], expected_result['WAP Issue Date'])
         self.assertEqual(result['Pre-Event Shifts Possible'], expected_result['Pre-Event Shifts Possible'])
@@ -326,6 +328,53 @@ class TestUM(unittest.TestCase):
         self.assertEqual(result['Main-event shifts scheduled'], expected_result['Main-event shifts scheduled'])
         self.assertEqual(result['Must work all pre-event dates'], expected_result['Must work all pre-event dates'])
 
+    # Test that user who works only after, but not on, main_event_start has WAP status of False
+    def test_14(self):
+        wstatus = wapstatus.WapStatus(
+            event_id,
+            pre_event_start,
+            main_event_start,
+            earliest_wap_date,
+            day_off_date,
+            train_r_role_id,
+            bar_role_id,
+            parent_ids
+        )
+
+        grouped_shifts = [[
+            {
+                'User ID': '6915',
+                'User Nickname': 'Dino',
+                'Role ID': '1781',
+                'Shift Start': '2022-08-29 06:00',
+                'Shift End': '2022-08-29 12:00',
+            },
+        ]]
+
+        expected_result = OrderedDict()
+        expected_result['User ID'] = grouped_shifts[0][0]['User ID']
+        expected_result['User Nickname'] = grouped_shifts[0][0]['User Nickname']
+        expected_result['WAP Status'] = False
+        expected_result['WAP Issue Date'] = None
+        expected_result['First shift day scheduled'] = '2022-08-29 06:00'
+        expected_result['Pre-Event Shifts Possible'] = 0
+        expected_result['Pre-event shifts scheduled'] = 0
+        expected_result['Qualifies for Pre-event day off'] = False
+        expected_result['Pre-event shifts required for WAP'] = 0
+        expected_result['Main-event shifts scheduled'] = 1
+        expected_result['Must work all pre-event dates'] = False
+
+        result = wstatus.determine_wap_status(grouped_shifts)[0]
+
+        print(json.dumps(result, indent=2))
+        self.assertEqual(result['WAP Status'], expected_result['WAP Status'])
+        self.assertEqual(result['WAP Issue Date'], expected_result['WAP Issue Date'])
+        self.assertEqual(result['Pre-Event Shifts Possible'], expected_result['Pre-Event Shifts Possible'])
+        self.assertEqual(result['Pre-event shifts scheduled'], expected_result['Pre-event shifts scheduled'])
+        self.assertEqual(result['Qualifies for Pre-event day off'], expected_result['Qualifies for Pre-event day off'])
+        self.assertEqual(result['Pre-event shifts required for WAP'], expected_result['Pre-event shifts required for WAP'])
+        self.assertEqual(result['Main-event shifts scheduled'], expected_result['Main-event shifts scheduled'])
+        self.assertEqual(result['Must work all pre-event dates'], expected_result['Must work all pre-event dates'])
     def determin_training_credits(self,
                                   pre_event_shifts,
                                   main_event_shifts,
