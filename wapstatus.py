@@ -15,10 +15,10 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
 class WapStatus:
-    def __init__(self, event_id, main_event_start, main_start_event_end, earliest_wap_date, day_off_date, train_r_role_id, bar_role_id, parent_ids):
+    def __init__(self, event_id, main_event_start, earliest_wap_date, day_off_date, train_r_role_id, bar_role_id, parent_ids):
         self.event_id = event_id
         self.main_event_start = main_event_start
-        self.main_start_event_end = main_start_event_end
+        self.main_start_event_end = main_event_start + timedelta(days=1)
         self.earliest_wap_date = earliest_wap_date
         self.day_off_date = day_off_date
         self.train_r_role_id = train_r_role_id

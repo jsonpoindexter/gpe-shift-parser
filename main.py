@@ -5,7 +5,6 @@ event_id = 47  # Babalooey event ID found by going to https://www.babalooey.com/
 # inspecting the dropdown list
 
 main_event_start = datetime.strptime('2022-08-28 00:00', '%Y-%m-%d %H:%M')  # Main event start shift date/time
-main_start_event_end = datetime.strptime('2022-08-29 00:00', '%Y-%m-%d %H:%M')
 earliest_wap_date = datetime.strptime('2022-08-16 00:00',
                                       '%Y-%m-%d %H:%M')  # Earliest date/time that a WAP can be given
 day_off_date = datetime.strptime('2022-08-25 00:00',
@@ -17,7 +16,6 @@ parent_ids = ['PARENT_ID']  # Google Drive Parent folder ID
 wapstatus = wapstatus.WapStatus(
     event_id,
     main_event_start,
-    main_start_event_end,
     earliest_wap_date,
     day_off_date,
     train_r_role_id,
