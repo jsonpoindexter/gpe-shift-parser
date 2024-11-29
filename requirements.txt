@@ -39,6 +39,6 @@ six==1.16.0
 toml==0.10.2
 typing==3.10.0.0
 uritemplate==3.0.1
-urllib3==1.26.9
+urllib3==1.26.19
 virtualenv==20.14.1
 zipp==1.2.0
